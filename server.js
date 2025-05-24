@@ -47,5 +47,5 @@ app.prepare().then(() => {
 
   })
 
-  console.log(`🚀 Server listening at http://localhost:${port} (${dev ? 'development' : 'production'})`)
+  console.log(`🚀 Server listening on port : ${port} (${dev ? 'development' : 'production'})`)
 })
