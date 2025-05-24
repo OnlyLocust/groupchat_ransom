@@ -3,6 +3,7 @@
 import { connectSocket, disconnectSocket, send } from "@/lib/socket";
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { toast } from 'react-toastify';
 
 const Page = () => {
   const [isjoin, setJoin] = useState(false);
@@ -45,10 +46,18 @@ const Page = () => {
   };
 
   const joinHandler = () => {
+    if(name.length == 0) {
+      toast.warn("enter something as your name")
+      return;
+    }
     setJoin(true);
   };
 
   const sendHandler = () => {
+    if(msg.length == 0){
+      toast.warn("There is no msg , Enter your message first")
+      return;
+    }
     send({ name, msg });
     // dispatch(setMsgStore({name,msg}))
     setMsg("");
