@@ -4,7 +4,7 @@ import { setMembers, setMsgStore } from "./msgSlice";
 let socket;
 
 export const connectSocket = (name) => {
-  socket = io("https://ransom-6c1r.onrender.com", {
+  socket = io("http://localhost:3000/", {
     transports: ["websocket"],
   });
 
