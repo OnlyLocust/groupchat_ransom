@@ -26,10 +26,12 @@ const Page = () => {
     };
 
     window.addEventListener("beforeunload", handleUnload);
+    window.addEventListener("pagehide", handleUnload);
 
     return () => {
       disconnectSocket(name);
       window.removeEventListener("beforeunload", handleUnload);
+      window.removeEventListener("pagehide", handleUnload);
     }
   }
   }, [isjoin]);
