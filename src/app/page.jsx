@@ -4,6 +4,7 @@ import { connectSocket, disconnectSocket, send } from "@/lib/socket";
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { toast } from 'react-toastify';
+import ScrollToBottom from 'react-scroll-to-bottom';
 
 const Page = () => {
   const [isjoin, setJoin] = useState(false);
@@ -83,7 +84,7 @@ const Page = () => {
           </div>
 
           {/* Chats section that takes up remaining space */}
-          <div className="flex-grow overflow-y-auto p-4 border">
+          <ScrollToBottom className="flex-grow overflow-y-auto p-4 border">
             {msgs.map((data, index) => {
               if (data.name == name) {
                 return (
@@ -114,7 +115,7 @@ const Page = () => {
                 );
               }
             })}
-          </div>
+          </ScrollToBottom>
 
           {/* Input section at the bottom */}
           <div className="p-4 flex gap-2 border-t">
