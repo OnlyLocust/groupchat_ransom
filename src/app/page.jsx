@@ -3,17 +3,25 @@
 import { connectSocket, disconnectSocket, send } from "@/lib/socket";
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { toast } from 'react-toastify';
-import ScrollToBottom from 'react-scroll-to-bottom';
+import { toast } from "react-toastify";
+import ScrollToBottom from "react-scroll-to-bottom";
+import { FiSend, FiLogOut, FiUser, FiUsers, FiMessageSquare } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Page = () => {
   const [isjoin, setJoin] = useState(false);
   const [msg, setMsg] = useState("");
   const [name, setName] = useState("");
   const [msgs, setMsgs] = useState([]);
+  const [mounted, setMounted] = useState(false);
+  const [isMembersOpen, setIsMembersOpen] = useState(false);
 
   const ms = useSelector((state) => state.msg.msgs);
-  const members = useSelector((state) => state.msg.members)
+  const members = useSelector((state) => state.msg.members);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     setMsgs(ms);
@@ -23,19 +31,19 @@ const Page = () => {
     if (isjoin) {
       connectSocket(name);
 
-     const handleUnload = () => {
-      disconnectSocket(name);
-    };
+      const handleUnload = () => {
+        disconnectSocket(name);
+      };
 
-    window.addEventListener("beforeunload", handleUnload);
-    window.addEventListener("pagehide", handleUnload);
+      window.addEventListener("beforeunload", handleUnload);
+      window.addEventListener("pagehide", handleUnload);
 
-    return () => {
-      disconnectSocket(name);
-      window.removeEventListener("beforeunload", handleUnload);
-      window.removeEventListener("pagehide", handleUnload);
+      return () => {
+        disconnectSocket(name);
+        window.removeEventListener("beforeunload", handleUnload);
+        window.removeEventListener("pagehide", handleUnload);
+      };
     }
-  }
   }, [isjoin]);
 
   const onChangeHandler = (e) => {
@@ -46,119 +54,239 @@ const Page = () => {
     setMsg(e.target.value);
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      sendHandler();
+    }
+  };
+
+  const joinhandleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      joinHandler();
+    }
+  };
+
   const joinHandler = () => {
-    if(name.length == 0) {
-      toast.warn("enter something as your name")
+    if (name.length == 0) {
+      toast.warn("Please enter your name");
       return;
     }
     setJoin(true);
   };
 
+  const leaveHandler = () => {
+    disconnectSocket(name);
+    setJoin(false);
+    setName("");
+    setMsg("");
+    toast.info("You've left the chat");
+  };
+
   const sendHandler = () => {
-    if(msg.length == 0){
-      toast.warn("There is no msg , Enter your message first")
+    if (msg.length == 0) {
+      toast.warn("Message cannot be empty");
       return;
     }
     send({ name, msg });
-    // dispatch(setMsgStore({name,msg}))
     setMsg("");
   };
 
+  if (!mounted) return null;
+
   return (
-    <>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {isjoin ? (
-        <div className="h-screen flex flex-col">
-          <div className="text-4xl font-bold p-4 flex justify-between">
-            <div>Welcome <span className="text-red-600">{name}</span></div>
-            <div>Online : {members.length}</div>
-          </div>
-          <div  className="border p-2 flex text-lg">
-            <div className="px-4 font-bold">Online: </div>
-            <div className="  flex overflow-x-scroll hide-scrollbar w-full gap-1">
-            {
-              members.map((user,index) => {
-                return (<div className="bg-gray-400 text-white font-bold  rounded px-3" key={index}>{user}</div>)
-              })
-            }
-          </div>
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="h-screen flex flex-col bg-white shadow-xl max-w-6xl mx-auto overflow-hidden"
+        >
+          {/* Header */}
+          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 flex justify-between items-center">
+            <div className="flex items-center space-x-3">
+              <FiMessageSquare className="text-xl" />
+              <h1 className="text-xl font-bold">
+                Chatting as <span className="text-indigo-200">{name}</span>
+              </h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button 
+                onClick={() => setIsMembersOpen(!isMembersOpen)}
+                className="flex items-center space-x-1 bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full transition-all"
+              >
+                <FiUsers />
+                <span>{members?.length || 0}</span>
+              </button>
+              <button
+                onClick={leaveHandler}
+                className="flex items-center space-x-1 bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full transition-all"
+              >
+                <FiLogOut />
+                <span>Leave</span>
+              </button>
+            </div>
           </div>
 
-          {/* Chats section that takes up remaining space */}
-          <ScrollToBottom className="flex-grow overflow-y-auto p-4 border">
-            {msgs.map((data, index) => {
-              if (data.name == name) {
-                return (
-                  <div key={index} className=" p-1">
-                    <div className="w-1/2 border rounded m-1 flex flex-col justify-self-end text-right">
-                      <div className="bg-green-400 p-1">You</div>
-                      <div className="p-1">{data.msg}</div>
-                    </div>
+          {/* Main Content */}
+          <div className="flex flex-1 overflow-hidden">
+            {/* Members sidebar */}
+            <AnimatePresence>
+              {isMembersOpen && (
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: 250 }}
+                  exit={{ width: 0 }}
+                  className="bg-gray-50 border-r overflow-hidden"
+                >
+                  <div className="p-4 font-semibold text-gray-700 flex items-center">
+                    <FiUsers className="mr-2" />
+                    Online Members
                   </div>
-                );
-              } else if (data.name.length == 0) {
-                return (
-                  <div
-                    className="flex items-center justify-center text-blue-300 m-1"
-                    key={index}
+                  <div className="overflow-y-auto h-full pb-20">
+                    {members?.map((user, index) => (
+                      <div key={index} className="flex items-center p-3 hover:bg-gray-100">
+                        <div className="relative">
+                          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                            <FiUser />
+                          </div>
+                          <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                        </div>
+                        <div className="ml-3">
+                          <div className="text-sm font-medium text-gray-900">
+                            {user} {user === name && "(You)"}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Chat area */}
+            <div className="flex-1 flex flex-col">
+              {/* Messages */}
+              <ScrollToBottom 
+                className="flex-grow overflow-y-auto p-4 bg-gradient-to-b from-white to-gray-50"
+                scrollViewClassName="scrollbar-thin"
+              >
+                <div className="space-y-4 max-w-3xl mx-auto w-full">
+                  <AnimatePresence>
+                    {msgs.map((data, index) => {
+                      if (data.name === name) {
+                        return (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0, x: 50 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="flex justify-end"
+                          >
+                            <div className="max-w-xs md:max-w-md bg-indigo-600 text-white rounded-2xl rounded-tr-none p-4 shadow-md">
+                              <div className="text-xs font-medium text-indigo-200">You</div>
+                              <div className="mt-1">{data.msg}</div>
+                            </div>
+                          </motion.div>
+                        );
+                      } else if (data.name.length === 0) {
+                        return (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="flex justify-center"
+                          >
+                            <div className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                              {data.msg}
+                            </div>
+                          </motion.div>
+                        );
+                      } else {
+                        return (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0, x: -50 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="flex justify-start"
+                          >
+                            <div className="max-w-xs md:max-w-md bg-white border border-gray-200 rounded-2xl rounded-tl-none p-4 shadow-sm">
+                              <div className="text-xs font-medium text-indigo-600">{data.name}</div>
+                              <div className="mt-1 text-gray-800">{data.msg}</div>
+                            </div>
+                          </motion.div>
+                        );
+                      }
+                    })}
+                  </AnimatePresence>
+                </div>
+              </ScrollToBottom>
+
+              {/* Input area */}
+              <div className="bg-white border-t p-4">
+                <div className="max-w-3xl mx-auto flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Type your message..."
+                    className="flex-1 border border-gray-300 rounded-full px-5 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    onChange={onChangeMsg}
+                    onKeyDown={handleKeyDown}
+                    value={msg}
+                    autoFocus
+                  />
+                  <button
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-full transition-colors shadow-md hover:shadow-lg"
+                    onClick={sendHandler}
                   >
-                    {data.msg}
-                  </div>
-                );
-              } else {
-                return (
-                  <div key={index} className=" p-1">
-                    <div className="w-1/2 border rounded m-1 flex flex-col justify-self-start text-left">
-                      <div className="bg-gray-400 p-1">{data.name}</div>
-                      <div className="p-1">{data.msg}</div>
-                    </div>
-                  </div>
-                );
-              }
-            })}
-          </ScrollToBottom>
-
-          {/* Input section at the bottom */}
-          <div className="p-4 flex gap-2 border-t">
-            <input
-              type="text"
-              placeholder="enter message"
-              className="border flex-1 p-2"
-              onChange={onChangeMsg}
-              value={msg}
-            />
-            <button
-              className="border text-white bg-green-400 px-4 py-2"
-              onClick={sendHandler}
-            >
-              Send
-            </button>
+                    <FiSend />
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </motion.div>
       ) : (
-        <div className="flex h-screen flex-col w-1/2 m-auto  justify-center items-center">
-          <div className="text-4xl font-bold text-center m-3">
-            Come to chat room
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center justify-center min-h-screen p-4"
+        >
+          <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+            <div className="text-center mb-8">
+              <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FiMessageSquare className="text-indigo-600 text-3xl" />
+              </div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to Chat</h1>
+              <p className="text-gray-500">Connect with others in real-time</p>
+            </div>
+            
+            <div className="space-y-6">
+              <div>
+                <input
+                  type="text"
+                  placeholder="Your name"
+                  className="w-full px-5 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-center font-medium"
+                  value={name}
+                  onChange={onChangeHandler}
+                  onKeyDown={joinhandleKeyDown}
+                  autoFocus
+                />
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                  * Please don't refresh after joining to stay connected
+                </p>
+              </div>
+              
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-3 rounded-full font-semibold shadow-md transition-all"
+                onClick={joinHandler}
+              >
+                Join Chat Room
+              </motion.button>
+            </div>
           </div>
-          <input
-            type="text"
-            placeholder="Enter your name "
-            className="text-lg text-center font-bold border rounded w-full m-3"
-            value={name}
-            onChange={onChangeHandler}
-          />
-          <p className="text-red-500">
-            * Do not refresh the page after joining the room , otherwise you
-            will be disconnected
-          </p>
-          <button
-            className="bg-blue-600 text-white hover:bg-blue-500 w-1/2 m-8 py-1 text-lg rounded"
-            onClick={joinHandler}
-          >
-            join
-          </button>
-        </div>
+        </motion.div>
       )}
-    </>
+    </div>
   );
 };
 
