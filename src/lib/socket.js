@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 import { store } from "./store";
-import { setMembers, setMsgStore } from "./msgSlice";
+import { leave, setMembers, setMsgStore } from "./msgSlice";
 let socket;
 
 export const connectSocket = (name) => {
@@ -16,6 +16,10 @@ export const connectSocket = (name) => {
     store.dispatch(setMsgStore({ name: "", msg: `${name} joined the chat` }));
   });
 
+  socket.on('duplicate' , () => {
+    store.dispatch(leave())
+  })
+
   socket.on("recv", ({ name, msg }) => {
     store.dispatch(setMsgStore({ name, msg }));
   });
@@ -25,6 +29,9 @@ export const connectSocket = (name) => {
   });
 
   socket.on("leaving", (name) => {
+
+    const me = store.getState((state) => state.msg.name)
+    if(name === me) store.dispatch(leave())
     store.dispatch(setMsgStore({ name: "", msg: `${name} leaved the chat` }));
   });
 
@@ -43,5 +50,11 @@ export const disconnectSocket = (name) => {
 export const send = ({ name, msg }) => {
   if (socket?.connected) {
     socket.emit("send", { name, msg });
+  }
+};
+
+export const sendHeartBeat = (name) => {
+  if (socket?.connected) {
+    socket.emit("heartbeat", name); // replace with actual user name
   }
 };
