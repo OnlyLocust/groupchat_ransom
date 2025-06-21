@@ -1,26 +1,55 @@
-import {motion, AnimatePresence } from "framer-motion";
-import React from "react";
-import { FiUser, FiUsers } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
+import React, { useEffect, useState } from "react";
+import { FiUser, FiUsers, FiX } from "react-icons/fi";
 import { useSelector } from "react-redux";
 
-const SideUser = ({isMembersOpen, members}) => {
+const SideUser = ({ isMembersOpen, members, setIsMembersOpen }) => {
+  const name = useSelector((state) => state.msg.name);
+  const [mobileView, setMobileView] = useState(false);
 
-    const name = useSelector((state) => state.msg.name);
+  useEffect(() => {
+    const handleResize = () => {
+      setMobileView(window.innerWidth < 768);
+    };
 
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
     <AnimatePresence>
       {isMembersOpen && (
         <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: 250 }}
-          exit={{ width: 0 }}
-          className="bg-gray-50 border-r overflow-hidden"
+          initial={{ x: "-100%" }}
+          animate={{ x: 0 }}
+          exit={{ x: "-100%" }}
+          transition={{ type: "tween" }}
+          className={`${
+            mobileView
+              ? "fixed top-0 left-0 w-screen h-full z-50"
+              : "w-[250px] h-full border-r"
+          } bg-gray-50 overflow-hidden`}
         >
-          <div className="p-4 font-semibold text-gray-700 flex items-center">
-            <FiUsers className="mr-2" />
-            Online Members
+          {/* Header */}
+          <div className="p-4 font-semibold text-gray-700 flex items-center justify-between border-b">
+            <div className="flex items-center">
+              <FiUsers className="mr-2" />
+              Online Members
+            </div>
+
+            {/* Close button - only visible on mobile */}
+            {mobileView && (
+              <button
+                onClick={() => setIsMembersOpen(false)}
+                className="md:hidden text-gray-600 hover:text-red-500"
+              >
+                <FiX size={20} />
+              </button>
+            )}
           </div>
+
+          {/* Member List */}
           <div className="overflow-y-auto h-full pb-20">
             {members?.map((user, index) => (
               <div

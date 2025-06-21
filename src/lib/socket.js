@@ -1,10 +1,14 @@
 import { io } from "socket.io-client";
 import { store } from "./store";
+import dotenv from 'dotenv'
+dotenv.config()
 import { leave, setMembers, setMsgStore } from "./msgSlice";
 let socket;
 
+const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000/'
+
 export const connectSocket = (name) => {
-  socket = io("https://ransom-6c1r.onrender.com", {
+  socket = io(socketUrl, {
     transports: ["websocket"],
   });
 

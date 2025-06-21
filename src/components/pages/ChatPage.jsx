@@ -37,7 +37,7 @@ const ChatPage = () => {
       />
 
       <div className="flex flex-1 overflow-hidden">
-        <SideUser isMembersOpen={isMembersOpen} members={members} />
+        <SideUser isMembersOpen={isMembersOpen} members={members} setIsMembersOpen={setIsMembersOpen}/>
 
         <div className="flex-1 flex flex-col">
           <MessageArea />
