@@ -9,7 +9,6 @@ let socket;
 const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || ''
 
 export const connectSocket = (name) => {
-  console.log(socketUrl );
   
   socket = io(socketUrl, {
     transports: ["websocket"],
