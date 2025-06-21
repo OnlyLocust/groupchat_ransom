@@ -1,13 +1,16 @@
 import { io } from "socket.io-client";
 import { store } from "./store";
 import dotenv from 'dotenv'
-dotenv.config()
+dotenv.config({path:'./../../.env'})
 import { leave, setMembers, setMsgStore } from "./msgSlice";
 let socket;
 
-const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000/'
+// const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000/'
+const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || ''
 
 export const connectSocket = (name) => {
+  console.log(socketUrl );
+  
   socket = io(socketUrl, {
     transports: ["websocket"],
   });
